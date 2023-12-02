@@ -1,0 +1,86 @@
+#ifndef GPU_FUNC_H_
+#define GPU_FUNC_H_
+
+#include <cuda_runtime.h>
+#include <helper_cuda.h>
+#include <helper_functions.h>
+
+#include "utils/common.h"
+#include "utils/gpu_util.h"
+
+int myGEMM(nn_real *A, nn_real *B, nn_real *C, nn_real alpha, nn_real beta,
+           int M, int N, int K);
+int myGEMM2(nn_real *A, nn_real *B, nn_real *C, nn_real *D, nn_real alpha, nn_real beta,
+           int M, int N, int K);
+int myGEMM2_2(nn_real *A, nn_real *B, nn_real *C, nn_real *D, nn_real alpha, nn_real beta,
+           int M, int N, int K);
+__global__ void myGEMM_GPU(nn_real *__restrict__ A, nn_real *__restrict__ B,
+           nn_real *__restrict__ C,
+           nn_real alpha, nn_real beta,
+           int M, int N, int K);
+__global__ void myGEMM2_GPU(nn_real *__restrict__ A, nn_real *__restrict__ B,
+           nn_real *__restrict__ C, nn_real *D,
+           nn_real alpha, nn_real beta,
+           int M, int N, int K);
+__global__ void myGEMM2_2_GPU(nn_real *__restrict__ A, nn_real *__restrict__ B,
+           nn_real *__restrict__ C, nn_real *D,
+           nn_real alpha, nn_real beta,
+           int M, int N, int K);
+
+// TODO
+int mySIGMOID(nn_real *X_1, nn_real *X, int M, int N);
+__global__ void mySIGMOID_GPU(nn_real *X_1, nn_real *X, int M, int N);
+int mySOFTMAX(nn_real *X_1, nn_real *X, nn_real *sum_row_X,int M, int N);
+__global__ void myEXP_GPU(nn_real *X_result, nn_real *X, int M, int N);
+int mySUMROW(nn_real *X_sumrow, nn_real*X, int M, int N);
+int myEXP(nn_real *X_result, nn_real *X, int M, int N);
+int myDIFFY_AVG_COL(nn_real *result, nn_real*y, nn_real*y_hat, int M, int N);
+// int myMULT_ABT(nn_real *A, nn_real *B, nn_real *C, int M, int N, int K);
+int myMULT_ATB(nn_real *A, nn_real *B, nn_real *C, int M, int N, int K);
+int myCOMPGRADZ1(nn_real *A, nn_real *B, nn_real *C, int M, int N);
+int myGRADIENT_UPDATE(nn_real *B, nn_real *C, nn_real learning_rate, int M, int N);
+int mySUBTRACT(nn_real*result, nn_real*A, nn_real*B, int M, int N);
+int myABT(nn_real*result, nn_real*A, nn_real*B, int M, int N, int K);
+int myATB(nn_real*result, nn_real*A, nn_real*B, int M, int N, int K);
+int myADD(nn_real*result, nn_real*A, nn_real*B, int M, int N);
+int myMULTINUM(nn_real*result, nn_real*A, nn_real num, int M, int N);
+int myMULTIELEM(nn_real*result, nn_real*A, nn_real*B, int M, int N);
+int myDIVIDEELEM(nn_real*result, nn_real*A, nn_real*B, int M, int N);
+int myDIVIDEVEC(nn_real*result, nn_real*A, nn_real*B, int M, int N);
+int myADDNUM(nn_real*result, nn_real*A, nn_real num, int M, int N);
+int mySUMROWMATRIX(nn_real*X_sumrow, nn_real*X, int M, int N);
+int mySUMCOLUMNMATRIX(nn_real*X_sumcolumn, nn_real*X, int M, int N);
+int mySUMCOLUMN(nn_real*X_sumcolumn, nn_real*X, int M, int N);
+int myEXPANDCOL(nn_real*result, nn_real*A, int M, int N);
+int myGRADb2(nn_real*X_result, nn_real*y_hat, nn_real *y, int M, int N);
+int myCOPYMATRIX(nn_real*X_result, nn_real*X, int M, int N);
+__global__ void mySUMROW_GPU(nn_real *X_sumrow, nn_real *X, int M, int N);
+__global__ void myDIVISION_GPU(nn_real *A, nn_real *B, nn_real *C, int M, int N);
+__global__ void mySOFTMAX_GPU(nn_real *X, nn_real *sum_row_X, int M, int N);
+__global__ void myDIFFY_AVG_COL_GPU(nn_real *result, nn_real *y, nn_real *y_hat, int M, int N);
+// __global__ void myMULT_ABT_GPU(nn_real *A, nn_real *B, nn_real *C, int M, int N, int K);
+__global__ void myMULT_ATB_GPU(nn_real *A, nn_real *B, nn_real *C, int M, int N, int K);
+__global__ void myCOMPGRADZ1_GPU(nn_real *A, nn_real *B, nn_real *C, int M, int N);
+__global__ void myGRADIENT_UPDATE_GPU(nn_real *B, nn_real *C, nn_real learning_rate, int M, int N);
+__global__ void mySUBTRACT_GPU(nn_real *result, nn_real*A, nn_real *B, int M, int N);
+__global__ void myABT_GPU(nn_real *result, nn_real*A, nn_real *B, int M, int N, int K);
+__global__ void myATB_GPU(nn_real *result, nn_real*A, nn_real *B, int M, int N, int K);
+__global__ void myADD_GPU(nn_real *result, nn_real*A, nn_real *B, int M, int N);
+__global__ void myMULTINUM_GPU(nn_real *result, nn_real*A, nn_real num, int M, int N);
+__global__ void myMULTIELEM_GPU(nn_real *result, nn_real*A, nn_real*B, int M, int N);
+__global__ void myDIVIDEELEM_GPU(nn_real *result, nn_real*A, nn_real*B, int M, int N);
+__global__ void myDIVIDEVEC_GPU(nn_real *result, nn_real*A, nn_real*B, int M, int N);
+__global__ void myADDNUM_GPU(nn_real *result, nn_real*A, nn_real num, int M, int N);
+__global__ void mySUMROWMATRIX_GPU(nn_real *X_sumrow, nn_real *X, int M, int N);
+__global__ void mySUMCOLUMNMATRIX_GPU(nn_real *X_sumcolumn, nn_real *X, int M, int N);
+__global__ void mySUMCOLUMN_GPU(nn_real *X_sumcolumn, nn_real *X, int M, int N);
+__global__ void myEXPANDCOL_GPU(nn_real *result, nn_real*A, int M, int N);
+__global__ void myGRADb2_GPU(nn_real *X_result, nn_real*y_hat, nn_real *y, int M, int N);
+__global__ void myCOPYMATRIX_GPU(nn_real *X_result, nn_real*X, int M, int N);
+// __global__ void myGMULTABT_GPU(nn_real *A, nn_real *B, nn_real *C, int M, int N, int K);
+int feedforward_parallel(nn_real *W_1, nn_real *W_2, nn_real*b_1, nn_real*b_2, nn_real*z_1, nn_real*z_2, nn_real*a_1, nn_real*a_2, nn_real*X, nn_real*rowsum_X, nn_real*y, int row_W_1, int row_W_2, int row_X, int col_X, int row_y);
+int backprop_parallel(nn_real *W_1, nn_real *W_2, nn_real*b_1, nn_real*b_2, nn_real*z_1, nn_real*z_2, nn_real*a_1, nn_real*a_2, nn_real*X, nn_real*rowsum_X, nn_real*y, int row_W_1, int row_W_2, int row_X, int col_X, int row_y);
+// Add additional function declarations
+// void memory_alloc(NeuralNetwork &nn, const arma::Mat<nn_real> &X, const arma::Mat<nn_real> &y);
+
+#endif

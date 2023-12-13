@@ -1,6 +1,7 @@
 # Google test installation directories.
 # Make sure these directories exist.
-GTEST_ROOT = /home/darve/googletest-1.13.0
+# ensure the version of g++ being correct [module load gcc/8.3.1]
+GTEST_ROOT = /usr/workspace/ju1/02_forward_modeling_repos/04_gtest/GTest/googletest-1.13.0
 GTEST_DIR = $(GTEST_ROOT)/googletest
 GTEST_INC = $(GTEST_ROOT)/googletest/include/
 

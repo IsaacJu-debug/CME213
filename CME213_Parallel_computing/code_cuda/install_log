@@ -1,2 +1,0 @@
-nvcc -O2 -isystem /usr/workspace/ju1/02_forward_modeling_repos/04_gtest/GTest/googletest-1.13.0/googletest/include/ -I/usr/workspace/ju1/02_forward_modeling_repos/04_gtest/GTest/googletest-1.13.0/googletest -c \
-    	/usr/workspace/ju1/02_forward_modeling_repos/04_gtest/GTest/googletest-1.13.0/googletest/src/gtest-all.cc

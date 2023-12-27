@@ -4,9 +4,15 @@
 GTEST_ROOT = /usr/workspace/ju1/02_forward_modeling_repos/04_gtest/GTest/googletest-1.13.0
 GTEST_DIR = $(GTEST_ROOT)/googletest
 GTEST_INC = $(GTEST_ROOT)/googletest/include/
-
+MODE ?= release
 CXX=nvcc
-CXXFLAGS=-O2 -Icuda_helper -I$(GTEST_INC) --gpu-architecture=compute_75 --gpu-code=sm_75
+
+# Conditional Flags
+ifeq ($(MODE),debug)
+    CXXFLAGS=-g -G -lineinfo -Icuda_helper -I$(GTEST_INC) --gpu-architecture=compute_70 --gpu-code=sm_70
+else
+    CXXFLAGS=-O2 -Icuda_helper -I$(GTEST_INC) --gpu-architecture=compute_70 --gpu-code=sm_70
+endif
 
 # Linker
 LDFLAGS := gtest.a

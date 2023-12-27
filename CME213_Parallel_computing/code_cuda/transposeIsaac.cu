@@ -46,12 +46,13 @@ protected:
 __global__ void simpleTranspose(int *array_in, int *array_out, size_t n_rows, size_t n_cols)
 {
   const size_t tid = threadIdx.x + blockDim.x * blockIdx.x;
-
-  size_t col = tid % n_cols;
-  size_t row = tid / n_cols;
+  const size_t col = tid % n_cols;
+  const size_t row = tid / n_cols;
 
   if (col < n_cols && row < n_rows)
   {
+    // column wise memory read is coalesce
+    // row wise memory read has jumps
     array_out[col * n_rows + row] = array_in[row * n_cols + col];
   }
 }
@@ -70,37 +71,33 @@ __global__ void simpleTranspose2D(int *array_in, int *array_out, size_t n_rows, 
 template <int num_warps>
 __global__ void fastTranspose(int *array_in, int *array_out, size_t n_rows, size_t n_cols)
 {
-  // blockDim.x = 32
-  // num_warps = 8
-  const int warp_id = threadIdx.y;
-  const int lane = threadIdx.x;
+
+  const size_t warp_id = threadIdx.y;
+  const size_t lane = threadIdx.x; 
 
   __shared__ int block[warp_size][warp_size + 1];
+  
+  const size_t bc = blockIdx.x;
+  const size_t br = blockIdx.y;
 
-  const int bc = blockIdx.x;
-  const int br = blockIdx.y;
-
-  // Load 32x32 block into shared memory
-  size_t gc = bc * warp_size + lane; // Global column index. same definition
+  size_t gc = bc * warp_size + lane; // same as blockIdx.x * blockDim.x + threadx.x
   size_t gr;
-  // warp_size / num_warps 
-  for (int i = 0; i < warp_size / num_warps; ++i)
+  // load data into shared memory
+  for (int i = 0; i < warp_size / num_warps; i++)
   {
-    gr = br * warp_size + i * num_warps + warp_id; // Global row index
-    block[i * num_warps + warp_id][lane] = array_in[gr * n_cols + gc];
+    gr = br * warp_size + i * num_warps + warp_id;
+    block[warp_id + i * num_warps][lane] = array_in[gr * n_cols + gc]; // i assume that threadx goes from 0 to blockDim.x in one block.
   }
-  __syncthreads();
 
-  // Now we switch to each warp outputting a row, which will read
-  // from a column in the shared memory. This way everything remains
-  // coalesced.
-
-  gr = br * warp_size + lane;
-  for (int i = 0; i < warp_size / num_warps; ++i)
+  __syncthreads(); // ensure threads in one block finish the writing tasks
+  // tranpose the local shared memory
+  gr = warp_size * br + lane;
+  for (int i = 0; i < warp_size / num_warps; i++)
   {
-    gc = bc * warp_size + i * num_warps + warp_id;
+    gc = warp_size * bc + i * num_warps + warp_id;
     array_out[gc * n_rows + gr] = block[lane][i * num_warps + warp_id];
   }
+  
 }
 
 void isTranspose(const std::vector<int> &A,
@@ -138,6 +135,38 @@ TEST_F(TransposeFixture, memcopy)
   checkCudaErrors(cudaGetLastError());
 
   printf("Bandwidth bench\n");
+  print_out(MEMCOPY_ITERATIONS, n, timer.elapsed());
+}
+
+
+TEST_F(TransposeFixture, fastTranspose)
+{
+  const int num_warps_per_block = 256 / 32;
+  ASSERT_EQ(warp_size % num_warps_per_block, 0);
+
+  dim3 block_dim(warp_size, num_warps_per_block);
+  dim3 grid_dim(n / warp_size, n / num_warps_per_block);
+
+  timer.start();
+  for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++)
+  {
+    fastTranspose<num_warps_per_block><<<grid_dim, block_dim>>>(d_in, d_out, n,
+                                                                n);
+  }
+  timer.stop();
+  cudaDeviceSynchronize();
+  checkCudaErrors(cudaGetLastError());
+
+  for (size_t i = 0; i < n * n; ++i)
+  {
+    h_out[i] = -1;
+  }
+  checkCudaErrors(cudaMemcpy(&h_out[0], d_out, sizeof(int) * n * n,
+                             cudaMemcpyDeviceToHost));
+
+  isTranspose(h_in, h_out, n);
+
+  printf("fastTranspose\n");
   print_out(MEMCOPY_ITERATIONS, n, timer.elapsed());
 }
 
@@ -199,36 +228,6 @@ TEST_F(TransposeFixture, transpose2D)
   print_out(MEMCOPY_ITERATIONS, n, timer.elapsed());
 }
 
-TEST_F(TransposeFixture, fastTranspose)
-{
-  const int num_warps_per_block = 256 / 32;
-  ASSERT_EQ(warp_size % num_warps_per_block, 0);
-
-  dim3 block_dim(warp_size, num_warps_per_block);
-  dim3 grid_dim(n / warp_size, n / num_warps_per_block);
-
-  timer.start();
-  for (unsigned int i = 0; i < MEMCOPY_ITERATIONS; i++)
-  {
-    fastTranspose<num_warps_per_block><<<grid_dim, block_dim>>>(d_in, d_out, n,
-                                                                n);
-  }
-  timer.stop();
-  cudaDeviceSynchronize();
-  checkCudaErrors(cudaGetLastError());
-
-  for (size_t i = 0; i < n * n; ++i)
-  {
-    h_out[i] = -1;
-  }
-  checkCudaErrors(cudaMemcpy(&h_out[0], d_out, sizeof(int) * n * n,
-                             cudaMemcpyDeviceToHost));
-
-  isTranspose(h_in, h_out, n);
-
-  printf("fastTranspose\n");
-  print_out(MEMCOPY_ITERATIONS, n, timer.elapsed());
-}
 
 int main(int argc, char **argv)
 {
